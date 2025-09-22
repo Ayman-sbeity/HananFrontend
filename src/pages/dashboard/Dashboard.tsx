@@ -1,5 +1,4 @@
 import { memo } from "react";
-import ItemList from "../../components/dashboard/ItemList";
 import StatsSection from "../../components/dashboard/StatsSection";
 import { Typography, Box, Fab, Divider } from "@mui/material";
 import { Add as AddIcon } from "@mui/icons-material";

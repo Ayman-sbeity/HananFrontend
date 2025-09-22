@@ -58,13 +58,13 @@ const ProductFilters = ({
     onFilterChange("category", updatedCategories.join(","));
   };
 
-  const handleSliderChange = (event: Event, newValue: number | number[]) => {
+  const handleSliderChange = (_: unknown, newValue: number | number[]) => {
     if (Array.isArray(newValue)) {
       setSliderValue(newValue);
     }
   };
 
-  const handleSliderChangeCommitted = (event: React.SyntheticEvent | Event, newValue: number | number[]) => {
+  const handleSliderChangeCommitted = (_: unknown, newValue: number | number[]) => {
     if (Array.isArray(newValue)) {
       onPriceRangeChange(newValue[0], newValue[1]);
     }
