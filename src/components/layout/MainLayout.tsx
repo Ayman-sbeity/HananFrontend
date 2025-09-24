@@ -11,7 +11,14 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <>
-      <Box sx={{ minHeight: "100vh", bgcolor: "white", width: "100%", overflowX: "hidden" }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "white",
+          width: "100%",
+          overflowX: "hidden",
+        }}
+      >
         <NavBar />
         <Box
           sx={{
@@ -28,7 +35,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             width: "100%",
           }}
         >
-              <Box
+          <Box
             sx={{
               width: "100%", // Fix: use 100% instead of 100vw
               maxWidth: { xs: "100%", sm: "600px", md: "900px", lg: "1100px" }, // Responsive maxWidth

@@ -35,12 +35,15 @@ import {
 import { useNavigate } from "react-router-dom";
 import { fetchItems, deleteItem, editItem } from "../../services/api";
 import type { Item } from "../../services/api";
-import { useCachedData } from "../../hooks/useCachedData";
 
 const ITEMS_PER_PAGE = 10;
 
 const ItemTable: React.FC = () => {
   const navigate = useNavigate();
+
+  const [items, setItems] = useState<Item[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null);
@@ -60,19 +63,29 @@ const ItemTable: React.FC = () => {
     type: "success",
   });
 
-  const {
-    data: fetchedItems,
-    loading,
-    error: fetchError,
-    refresh: refreshItems,
-  } = useCachedData<Item[]>(
-    "product-items",
-    () => fetchItems({ includeInactive: true }),
-    5 * 60 * 1000
-  );
+  const fetchItemsData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchItems({ includeInactive: true });
+      setItems(data);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch items");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const filteredItems = fetchedItems
-    ? fetchedItems.filter((item) => {
+  useEffect(() => {
+    fetchItemsData();
+  }, []);
+
+  const refreshItems = () => {
+    fetchItemsData();
+  };
+
+  const filteredItems = items
+    ? items.filter((item) => {
         if (activeFilter === "all") return true;
         if (activeFilter === "active") return item.isActive === true;
         if (activeFilter === "inactive") return item.isActive === false;
@@ -86,11 +99,11 @@ const ItemTable: React.FC = () => {
     page * ITEMS_PER_PAGE
   );
 
-  const activeItemsCount = fetchedItems
-    ? fetchedItems.filter((item) => item.isActive === true).length
+  const activeItemsCount = items
+    ? items.filter((item) => item.isActive === true).length
     : 0;
-  const inactiveItemsCount = fetchedItems
-    ? fetchedItems.filter((item) => item.isActive === false).length
+  const inactiveItemsCount = items
+    ? items.filter((item) => item.isActive === false).length
     : 0;
 
   useEffect(() => {
@@ -241,10 +254,10 @@ const ItemTable: React.FC = () => {
     );
   }
 
-  if (fetchError) {
+  if (error) {
     return (
       <Alert severity="error" sx={{ mb: 2 }}>
-        {fetchError}
+        {error}
         <Button
           onClick={refreshItems}
           startIcon={<RefreshIcon />}
@@ -293,7 +306,7 @@ const ItemTable: React.FC = () => {
             </Box>
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
               <Chip
-                label={`All Products (${fetchedItems?.length || 0})`}
+                label={`All Products (${items?.length || 0})`}
                 color={activeFilter === "all" ? "primary" : "default"}
                 onClick={() => setActiveFilter("all")}
                 sx={{ cursor: "pointer" }}
@@ -341,18 +354,18 @@ const ItemTable: React.FC = () => {
       {filteredItems.length === 0 ? (
         <Box sx={{ textAlign: "center", py: 4 }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
-            {fetchedItems?.length === 0
+            {items?.length === 0
               ? "No products found"
               : `No ${activeFilter} products found`}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-            {fetchedItems?.length === 0
+            {items?.length === 0
               ? "Get started by adding your first product"
               : activeFilter === "active"
               ? "All your products are currently inactive"
               : "All your products are currently active"}
           </Typography>
-          {fetchedItems?.length === 0 && (
+          {items?.length === 0 && (
             <Button
               variant="contained"
               startIcon={<AddIcon />}

@@ -2,27 +2,44 @@ import CustomLabel from "../components/common/CustomLabel";
 import CartDetails from "./CartPageSections/CratDetails";
 import { Box, Typography, Alert } from "@mui/material";
 import { useCartManagement } from "../hooks/useCartManagement";
+import { useCart } from "../context/CartContext";
 
 export default function CartPage() {
-  const { 
-    cartItems, 
-    error, 
-    removeFromCart, 
-    updateQuantity, 
-    isAuthenticated 
-  } = useCartManagement();
+  const { cartItems, error, removeFromCart, updateQuantity, isAuthenticated } =
+    useCartManagement();
 
-  const formattedCartItems = cartItems.map(item => ({
-    id: item.product,
-    image: item.image || "https://via.placeholder.com/150",
-    name: item.name,
-    size: "Standard",
-    price: item.price,
-    quantity: item.quantity
-  }));
+  const { removeItem, fetchCart } = useCart();
+
+  const formattedCartItems = cartItems.map((item) => {
+    const productId =
+      typeof item.product === "string"
+        ? item.product
+        : (item.product && (item.product as any)._id) || item._id || "";
+
+    return {
+      id: productId,
+      image: item.image || "https://via.placeholder.com/150",
+      name: item.name,
+      size: "Standard",
+      price: item.price,
+      quantity: item.quantity,
+    };
+  });
 
   const handleRemoveItem = async (id: string) => {
-    await removeFromCart(id);
+    try {
+      removeItem(id);
+    } catch (err) {}
+
+    try {
+      await removeFromCart(id);
+    } catch (err) {
+      try {
+        await fetchCart();
+      } catch (e) {
+        console.error("Failed to refetch cart after remove error", e);
+      }
+    }
   };
 
   const handleUpdateQuantity = async (id: string, quantity: number) => {

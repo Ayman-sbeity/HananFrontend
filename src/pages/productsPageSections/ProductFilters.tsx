@@ -29,6 +29,7 @@ interface ProductFiltersProps {
   onPriceRangeChange: (minPrice: number, maxPrice: number) => void;
   selectedFilters: Record<string, string>;
   priceRange: { min: number; max: number };
+
 }
 
 const sortOptions = [
@@ -48,6 +49,9 @@ const ProductFilters = ({
   // Multi-select categories
   const selectedCategories: string[] = selectedFilters.category ? selectedFilters.category.split(",") : [];
 
+  const allCategoryValues = categoryOptions.map((option) => option.value);
+  const isAllSelected = selectedCategories.length === allCategoryValues.length;
+
   const handleCategoryChange = (category: string) => {
     let updatedCategories;
     if (selectedCategories.includes(category)) {
@@ -56,6 +60,14 @@ const ProductFilters = ({
       updatedCategories = [...selectedCategories, category];
     }
     onFilterChange("category", updatedCategories.join(","));
+  };
+
+  const handleSelectAllCategories = () => {
+    if (isAllSelected) {
+      onFilterChange("category", "");
+    } else {
+      onFilterChange("category", allCategoryValues.join(","));
+    }
   };
 
   const handleSliderChange = (_: unknown, newValue: number | number[]) => {
@@ -109,6 +121,17 @@ const ProductFilters = ({
           <CustomLabel text="CATEGORY" fontWeight={500} />
         </AccordionSummary>
         <AccordionDetails>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={isAllSelected}
+                indeterminate={selectedCategories.length > 0 && !isAllSelected}
+                onChange={handleSelectAllCategories}
+                size="small"
+              />
+            }
+            label={<CustomLabel text="Select All" variant="body2" />}
+          />
           {categoryOptions.map((option) => (
             <FormControlLabel
               key={option.value}
@@ -146,6 +169,11 @@ const ProductFilters = ({
             value={selectedFilters.sort || ""}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onFilterChange("sort", e.target.value)}
           >
+            <FormControlLabel
+              value=""
+              control={<Radio size="small" />}
+              label={<CustomLabel text="Fetch All" variant="body2" />}
+            />
             {sortOptions.map((option) => (
               <FormControlLabel
                 key={option.value}

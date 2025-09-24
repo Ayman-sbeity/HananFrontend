@@ -70,17 +70,16 @@ interface ProductFilterOptions {
 }
 
 export const fetchItems = async (options: ProductFilterOptions = { showAll: true }) => {
-  const response = await api.get('/products', { 
-    params: {
-      showAll: options.showAll?.toString(),
-      minPrice: options.minPrice,
-      maxPrice: options.maxPrice,
-      sort: options.sort,
-      category: options.category,
-      search: options.search,
-      includeInactive: options.includeInactive
-    }
-  });
+  const params: Record<string, any> = {};
+  if (typeof options.showAll !== 'undefined') params.showAll = options.showAll ? 'true' : 'false';
+  if (typeof options.includeInactive !== 'undefined') params.includeInactive = options.includeInactive ? 'true' : 'false';
+  if (typeof options.minPrice !== 'undefined') params.minPrice = options.minPrice;
+  if (typeof options.maxPrice !== 'undefined') params.maxPrice = options.maxPrice;
+  if (typeof options.sort !== 'undefined') params.sort = options.sort;
+  if (typeof options.category !== 'undefined') params.category = options.category;
+  if (typeof options.search !== 'undefined') params.search = options.search;
+
+  const response = await api.get('/products', { params });
   return response.data.products || response.data;
 };
 
@@ -96,16 +95,46 @@ export const getProductsCount = async () => {
 
 export const addItem = async (item: Omit<Item, '_id' | 'id' | 'createdAt' | 'updatedAt'>) => {
   const response = await api.post('/products', item);
+  try {
+    // mark invalidation in localStorage (helps cross-tab) and dispatch an in-window event
+    const key = 'product-items';
+    try {
+      localStorage.setItem(`cacheInvalidation:${key}`, String(Date.now()));
+    } catch (e) {
+      // ignore localStorage errors
+    }
+    window.dispatchEvent(new CustomEvent('cacheInvalidated', { detail: { key } }));
+  } catch (e) {
+    // ignore in non-browser environments
+  }
   return response.data;
 };
 
 export const editItem = async (id: string, item: Partial<Item>) => {
   const response = await api.put(`/products/${id}`, item);
+  try {
+    const key = 'product-items';
+    try {
+      localStorage.setItem(`cacheInvalidation:${key}`, String(Date.now()));
+    } catch (e) {}
+    window.dispatchEvent(new CustomEvent('cacheInvalidated', { detail: { key } }));
+  } catch (e) {
+    // ignore
+  }
   return response.data;
 };
 
 export const deleteItem = async (id: string) => {
   const response = await api.delete(`/products/${id}`);
+  try {
+    const key = 'product-items';
+    try {
+      localStorage.setItem(`cacheInvalidation:${key}`, String(Date.now()));
+    } catch (e) {}
+    window.dispatchEvent(new CustomEvent('cacheInvalidated', { detail: { key } }));
+  } catch (e) {
+    // ignore
+  }
   return response.data;
 };
 

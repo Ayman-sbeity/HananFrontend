@@ -38,13 +38,21 @@ const ItemForm: React.FC<ItemFormProps> = ({
   onSubmit,
   isLoading = false,
 }) => {
+  const getInitialCategory = () => {
+    const cat = initialItem?.category;
+    if (!cat) return "";
+    if (typeof cat === "string") return cat;
+    if (typeof cat === "object") return (cat as any).name || (cat as any)._id || "";
+    return String(cat);
+  };
+
   const [formData, setFormData] = useState({
     name: initialItem?.name || "",
     description: initialItem?.description || "",
     price: initialItem?.price || 0,
     stock: initialItem?.stock || 0,
     image: initialItem?.image || "",
-    category: initialItem?.category || "",
+    category: getInitialCategory(),
     brand: initialItem?.brand || "",
     isActive: initialItem?.isActive !== undefined ? initialItem.isActive : true,
   });
@@ -90,7 +98,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
   const validateForm = () => {
     if (!formData.name.trim()) return "Product name is required";
     if (!formData.description.trim()) return "Description is required";
-    if (!formData.category) return "Category is required";
+    if (!formData.category || !String(formData.category).trim()) return "Category is required";
     if (!formData.image) return "Image is required";
     if (formData.price <= 0) return "Price must be greater than 0";
     if (formData.stock < 0) return "Stock cannot be negative";
@@ -106,7 +114,9 @@ const ItemForm: React.FC<ItemFormProps> = ({
       return;
     }
 
-    onSubmit({ ...formData, quantity: formData.stock });
+    // ensure category is sent as a string (some APIs return category as object)
+    const payload = { ...formData, category: String(formData.category), quantity: formData.stock } as any;
+    onSubmit(payload);
   };
 
   return (
