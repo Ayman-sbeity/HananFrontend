@@ -21,7 +21,6 @@ export default function ProductsPage() {
     max: 1000,
   });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [showDebug, setShowDebug] = useState(false);
 
   const fetchOptions = {
     showAll: true,
@@ -38,7 +37,11 @@ export default function ProductsPage() {
     loading,
     error,
     refresh: refreshProducts,
-  } = useCachedData<Item[]>(cacheKey, () => fetchItems(fetchOptions), 5 * 60 * 1000);
+  } = useCachedData<Item[]>(
+    cacheKey,
+    () => fetchItems(fetchOptions),
+    5 * 60 * 1000
+  );
 
   const handleFilterChange = (filterType: string, value: string) => {
     setSelectedFilters((prev) => ({
@@ -84,17 +87,23 @@ export default function ProductsPage() {
     return (
       <Box
         sx={{
+          // Layout: sidebar (md+) + main content, stacked on xs
           display: "flex",
           flexDirection: { xs: "column", md: "row" },
-          gap: 4,
-          p: { xs: 2, sm: 3 },
-          justifyContent: "flex-start",
-          alignItems: "flex-start",
+          gap: { xs: 2, md: 4 },
+          // Use full-bleed on mobile, keep spacing on larger screens
+          p: { xs: 0, sm: 3 },
           m: 0,
-          mt: 0,
           width: "100%",
           boxSizing: "border-box",
-          overflow: "hidden",
+          alignItems: "flex-start",
+          justifyContent: "flex-start",
+          // Horizontal overflow hidden, vertical scrolling allowed on mobile
+          overflowX: "hidden",
+          overflowY: { xs: "auto", md: "visible" },
+          // Keep the container height constrained on small viewports so inner scroll works
+          height: { xs: "calc(100vh - 60px)", md: "auto" },
+          pb: 2,
         }}
       >
         <Box
@@ -115,31 +124,37 @@ export default function ProductsPage() {
           </Box>
         </Box>
 
-          <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box sx={{ mb: 3 }}>
             <Skeleton variant="text" height={40} width="30%" sx={{ mb: 2 }} />
             <Skeleton variant="text" height={24} width="20%" />
           </Box>
           <Box
             sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                sm: 'repeat(2, minmax(0, 1fr))',
-                md: 'repeat(3, minmax(0, 1fr))',
-              },
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
               gap: { xs: 2, sm: 3 },
             }}
           >
             {[...Array(6)].map((_, index) => (
-              <Box key={index} sx={{ width: '100%' }}>
+              <Box key={index} sx={{ width: "100%" }}>
                 <Skeleton
                   variant="rectangular"
                   height={200}
                   sx={{ mb: 1, borderRadius: 1 }}
                 />
-                <Skeleton variant="text" height={24} width="70%" sx={{ mb: 0.5 }} />
-                <Skeleton variant="text" height={18} width="40%" sx={{ mb: 0.5 }} />
+                <Skeleton
+                  variant="text"
+                  height={24}
+                  width="70%"
+                  sx={{ mb: 0.5 }}
+                />
+                <Skeleton
+                  variant="text"
+                  height={18}
+                  width="40%"
+                  sx={{ mb: 0.5 }}
+                />
                 <Skeleton variant="text" height={24} width="30%" />
               </Box>
             ))}
@@ -177,18 +192,18 @@ export default function ProductsPage() {
       sx={{
         display: "flex",
         flexDirection: { xs: "column", md: "row" },
-        gap: 4,
-        p: { xs: 2, sm: 3 },
-        justifyContent: "flex-start",
-        alignItems: "flex-start",
-        m: 0,
-        mt: 0,
-        width: "100%",
+        gap: { xs: 2, md: 4 },
+        p: { xs: 4, sm: 3 },
+        overflowY: "auto",
+        overflowX: "hidden",
+        width: { xs: "100%", sm: "100%" },
+        mx: { xs: 0, sm: "0px" },
+        flexShrink: 0,
+        height: { xs: "calc(100% - 60px)", sm: "auto" },
+        pb: 2,
         boxSizing: "border-box",
-        overflow: "hidden",
       }}
     >
-      {/* Filters always visible */}
       <Box
         sx={{
           display: { xs: "none", md: "block" },
@@ -258,12 +273,16 @@ export default function ProductsPage() {
 
         <Box
           sx={{
-            overflow: "hidden",
-            display: { xs: "none", md: "block" },
-            width: 280,
+            overflowY: "auto",
+            overflowX: "hidden",
+            display: "block",
+            width: { xs: "100%", sm: "100%" },
+            // maxWidth: 380,
+            mx: { xs: 0, sm: "0px" },
             flexShrink: 0,
-            height: "calc(100% - 60px)",
+            height: { xs: "calc(100% - 60px)", sm: "auto" },
             pb: 2,
+            boxSizing: "border-box",
           }}
         >
           <ProductFilters
@@ -274,23 +293,8 @@ export default function ProductsPage() {
           />
         </Box>
       </Drawer>
-
-      {/* Products section */}
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        {/* Debug toggle and panel */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-          <Button size="small" onClick={() => setShowDebug((s) => !s)}>
-            {showDebug ? 'Hide' : 'Show'} Fetch Debug
-          </Button>
-        </Box>
-        {showDebug && (
-          <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-            <CustomLabel text="Fetch Debug" variant="subtitle2" sx={{ mb: 1 }} />
-            <Box component="pre" sx={{ whiteSpace: 'pre-wrap', fontSize: 12, maxHeight: 200, overflow: 'auto' }}>
-              {`cacheKey: ${cacheKey}\n\nfetchOptions:\n${JSON.stringify(fetchOptions, null, 2)}\n\nfetched response (first 3 items):\n${fetchedProducts ? JSON.stringify(fetchedProducts.slice(0,3), null, 2) : 'no data'}`}
-            </Box>
-          </Box>
-        )}
+      {/* Content area: header, tools, product list */}
+      <Box sx={{ flex: 1, minWidth: 0, px: { xs: 0, md: 0 } }}>
         <Box
           sx={{
             mb: 3,
@@ -371,30 +375,36 @@ export default function ProductsPage() {
         {loading ? (
           <Box
             sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                sm: 'repeat(2, minmax(0, 1fr))',
-                md: 'repeat(3, minmax(0, 1fr))',
-              },
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
               gap: { xs: 2, sm: 3 },
             }}
           >
             {[...Array(6)].map((_, index) => (
-              <Box key={index} sx={{ width: '100%' }}>
+              <Box key={index} sx={{ width: "100%" }}>
                 <Skeleton
                   variant="rectangular"
                   height={200}
                   sx={{ mb: 1, borderRadius: 1 }}
                 />
-                <Skeleton variant="text" height={24} width="70%" sx={{ mb: 0.5 }} />
-                <Skeleton variant="text" height={18} width="40%" sx={{ mb: 0.5 }} />
+                <Skeleton
+                  variant="text"
+                  height={24}
+                  width="70%"
+                  sx={{ mb: 0.5 }}
+                />
+                <Skeleton
+                  variant="text"
+                  height={18}
+                  width="40%"
+                  sx={{ mb: 0.5 }}
+                />
                 <Skeleton variant="text" height={24} width="30%" />
               </Box>
             ))}
           </Box>
         ) : filteredProducts.length === 0 ? (
-          <Box >
+          <Box>
             <CustomLabel
               text="No products found"
               variant="h6"
@@ -419,17 +429,20 @@ export default function ProductsPage() {
         ) : (
           <Box
             sx={{
-              display: 'grid',
+              display: "grid",
               gridTemplateColumns: {
-                xs: '1fr',
-                sm: 'repeat(2, minmax(0, 1fr))',
-                md: 'repeat(3, minmax(0, 1fr))',
+                xs: "1fr",
+                sm: "repeat(2, minmax(0, 1fr))",
+                md: "repeat(3, minmax(0, 1fr))",
               },
-              gap: { xs: 2, sm: 3 },
+              gap: { xs: 4, sm: 3 },
             }}
           >
             {filteredProducts.map((product: Item) => (
-              <Box key={product._id || product.id} sx={{ width: '100%' }}>
+              <Box
+                key={product._id || product.id}
+                sx={{ width: "100%", px: { xs: 0, sm: 0 } }}
+              >
                 <ProductCard product={product} />
               </Box>
             ))}

@@ -102,7 +102,7 @@ const ProductFilters = ({
   };
 
   return (
-    <Box sx={{ width: 280, flexShrink: 0 }}>
+    <Box sx={{ width: { xs: '100%', sm: 280 }, maxWidth: 380, boxSizing: 'border-box' }}>
       <CustomLabel
         text="SHOPPING OPTIONS"
         variant="h6"
@@ -215,7 +215,7 @@ const ProductFilters = ({
               sx={{ mt: 3, mb: 2 }}
             />
             
-            <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1, sm: 2 }} sx={{ mb: 2 }}>
               <TextField
                 label="Min"
                 type="number"
